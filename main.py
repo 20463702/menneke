@@ -18,7 +18,6 @@ from pybricks.parameters import Port, Color
 from pybricks.tools import wait, StopWatch
 
 # Global definitions (constants); waardes komen van pybricks documentatie code
-#TODO #?
 GYRO_CALIBRATION_LOOP_COUNT = 200
 GYRO_OFFSET_FACTOR = 0.0005
 TARGET_LOOP_PERIOD = 15  
@@ -42,7 +41,6 @@ STAB_ACTION_MAP = {
     Color.WHITE: BACKWARD_FAST,
 }
 
-#TODO Define de andere funcites: turn, etc.
 class DriveBase:
     def __init__(self, motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor):
         self.rear_left = motor_rl
@@ -121,10 +119,9 @@ class Robot:
         self.stab_drive_speed = 0 # Alleen de drive speed gedurende de stabilisatie -> de 4 wielige aandrijving heeft dit niet nodig
         self.stab_steering = 0 # Alleen de steering gedurende de stabilisatie -> de 4 wielige aandrijving heeft dit niet nodig
 
-
-    #TODO beter commentaar
     # <summary>
     #   Calibreerd de gyro sensor.
+    #TODO beter commentaar
     # </summary>
     def calibrate_gyrosensor(self):
         while True:
@@ -195,7 +192,6 @@ class Robot:
 
             #? Voor een of andere vage rede werkt dit niet in de main functie maar wel in deze loop???
             if self.sensor_ultrasonic.distance() < 100:
-                self.brick.screen.print("4")
                 return False
 
             if self.counts["control_loop"] == 0:
@@ -223,7 +219,7 @@ class Robot:
             wheel_rate = sum(self.stab_motor_position_change) / 4 / average_control_loop_period
 
             output_power = (-0.01 * self.stab_drive_speed) + (0.8 * self.body["rate"] + 15 * self.body["angle"] + 0.08 * wheel_rate + 0.12 * self.stab_wheel_angle)
-            #? De power is relatief duty (in procent dus): wanneer dit meer dan |100| (absoluut) is moet dit dus verlaagt worden naar 100
+            #? De power is in duty (in procent dus): wanneer dit meer dan |100| (absoluut) is moet dit dus verlaagt worden naar 100
             if output_power > 100:
                 output_power = 100
             if output_power < -100:
@@ -232,7 +228,6 @@ class Robot:
             self.drive_base.rear_right.dc(output_power - 0.1 * self.stab_steering)
             self.drive_base.rear_left.dc(output_power + 0.1 * self.stab_steering)
 
-            #TODO evalueer of dit nodig is of niet
             # Checkt of de robot is omgevallen
             if abs(output_power) < 100:
                 self.timers["stab_fall"].reset()
@@ -265,9 +260,8 @@ def main():
 
     menneke.brick.light.on(Color.RED)
 
-    while True:
+    while True: #! Test zonder loop
         if not menneke.stabilise():
-            menneke.brick.screen.print("1")
             break
 
     menneke.brick.light.on(Color.GREEN)
