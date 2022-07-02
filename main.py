@@ -8,8 +8,6 @@
 # stabilisatie gebruikt worden jegens code leesbaarheid.
 
 from ucollections import namedtuple
-import urandom
-import math
 
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, GyroSensor
