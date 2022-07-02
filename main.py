@@ -25,9 +25,9 @@ TARGET_LOOP_PERIOD = 15
 #? Wordt gebruikt om te bepalen welke richting de robot rijdt.
 Stab_action = namedtuple('Action ', ['drive_speed', 'steering'])
 STOP = Stab_action(drive_speed=0, steering=0)
-FORWARD_FAST = Stab_action(drive_speed=150, steering=0)
+FORWARD_FAST = Stab_action(drive_speed=100, steering=0)
 FORWARD_SLOW = Stab_action(drive_speed=40, steering=0)
-BACKWARD_FAST = Stab_action(drive_speed=-75, steering=0)
+BACKWARD_FAST = Stab_action(drive_speed=-65, steering=0)
 BACKWARD_SLOW = Stab_action(drive_speed=-10, steering=0)
 TURN_RIGHT = Stab_action(drive_speed=0, steering=70)
 TURN_LEFT = Stab_action(drive_speed=0, steering=-70)
@@ -160,7 +160,7 @@ class Robot:
                 self.brick.speaker.beep(0, -1)
 
                 if new_action.steering != 0:
-                    action = Stab_Action(drive_speed=action.drive_speed, steering=new_action.steering)
+                    action = Stab_action(drive_speed=action.drive_speed, steering=new_action.steering)
                 else:
                     action = new_action
                 yield action
@@ -192,6 +192,10 @@ class Robot:
 
             #? Voor een of andere vage rede werkt dit niet in de main functie maar wel in deze loop???
             if self.sensor_ultrasonic.distance() < 100:
+                self.drive_base.rear_right.dc(100)
+                self.drive_base.rear_left.dc(100)
+                wait(100)
+                self.drive_base.stop_all()
                 return False
 
             if self.counts["control_loop"] == 0:
@@ -231,7 +235,7 @@ class Robot:
             # Checkt of de robot is omgevallen
             if abs(output_power) < 100:
                 self.timers["stab_fall"].reset()
-            elif self.timers["stab_fall"].time() > 1000:
+            elif self.timers["stab_fall"].time() > 10000:
                 return False
 
             action = next(action_task)
@@ -251,7 +255,7 @@ def main():
         color_sensor=ColorSensor(Port.S3),
         ultrasonic_sensor=UltrasonicSensor(Port.S4)
     )
-
+    
     menneke.brick.light.off()
     wait(1000)
 
@@ -260,15 +264,12 @@ def main():
 
     menneke.brick.light.on(Color.RED)
 
-    while True: #! Test zonder loop
+    while True:
         if not menneke.stabilise():
             break
 
     menneke.brick.light.on(Color.GREEN)
-    menneke.drive_base.drive(100)
-    wait(1000)
-    menneke.drive_base.turn(200, 7200)
-    menneke.drive_base.drive(100)
+    menneke.drive_base.drive(720)
     wait(1000)
 
 main()
