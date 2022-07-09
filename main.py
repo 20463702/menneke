@@ -3,11 +3,12 @@
 #! BELANGRIJKE INFORMATIE
 # De suffix "stab_" (in ieder mogelijke combinatie van hoofd en kleine letters) duidt op de stabilisatie of de periode waarin
 # de stabilisatie gebeurt tenzij anders aangegeven; dit maakt duidelijk dat deze "dingen" alleen een functie hebben
-# gedurende de stabilisatie periode - dit betekend tevens niet dat "dingen" zonder de prefix "stab" (in iedere mogelijke
-# combinatie van hoofd en kleine letters) niet worden gebruikt voor de stabilisatie noch niet exclusief in de voor 
+# gedurende de stabilisatie periode - dit betekend tevens niet dat "dingen" zonder de prefix "stab_" (in iedere mogelijke
+# combinatie van hoofd en kleine letters) niet worden gebruikt voor de stabilisatie noch exclusief voor de
 # stabilisatie gebruikt worden jegens code leesbaarheid.
 
 from ucollections import namedtuple
+from math import pi as PI
 
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, GyroSensor
@@ -15,7 +16,7 @@ from pybricks.nxtdevices import UltrasonicSensor, ColorSensor
 from pybricks.parameters import Port, Color
 from pybricks.tools import wait, StopWatch
 
-# Global definitions (constants); waardes komen van pybricks documentatie code
+# Global definitions (constants): waardes komen van pybricks documentatie code
 GYRO_CALIBRATION_LOOP_COUNT = 200
 GYRO_OFFSET_FACTOR = 0.0005
 TARGET_LOOP_PERIOD = 15  
@@ -40,11 +41,12 @@ STAB_ACTION_MAP = {
 }
 
 class DriveBase:
-    def __init__(self, motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor):
+    def __init__(self, motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor, wheel_diameter: int):
         self.rear_left = motor_rl
         self.rear_right = motor_rr
         self.front_left = motor_fl
         self.front_right = motor_fr
+        self.degrees_per_millimeters = wheel_diameter * PI / 360
 
     # <param name="speed">rotational speed (deg/s)</param>
     def drive(self, speed: float):
@@ -53,15 +55,24 @@ class DriveBase:
         self.rear_left.run(speed * -1)
         self.rear_right.run(speed * -1)
 
+    #? Omdat Samuel incapabel is.
+    # <param name="distance">(mm)</param>
+    # <param name="speed">(mm/s)</param>
+    def straight(self, distance: int, speed: float):
+        self.reset_angle_all()
+        self.drive(speed * self.degrees_per_millimeters)
+        while self.front_left.angle() < distance * self.degrees_per_millimeters:
+            pass
+        self.stop_all()
+
     # <param name="speed">arbitraire snelheids value</param>
     # <param name="duration">(ms)</param>
-    def turn(self, speed: float, duration: int):
+    def turn(self, speed: float, turn_rate: float=0.2):
         self.stop_all()
         self.front_left.run(speed)
-        self.front_right.run(0.2 * speed)
+        self.front_right.run(turn_rate * speed)
         self.rear_left.run(speed * -1)
-        self.rear_right.run(0.2 * speed * -1)
-        wait(duration)
+        self.rear_right.run(turn_rate * speed * -1)
         self.stop_all()
 
     def stop_all(self):
@@ -80,7 +91,7 @@ class Robot:
     #? Fields worden hier (bijna) niet beschreven (aan de hand van commentaar): dit wordt (waar nodig) gedaan waar ze hun functie dienen
     def __init__(self, brick: EV3Brick,
         motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor,
-        color_sensor: ColorSensor, gyro_sensor: GyroSensor, ultrasonic_sensor: UltrasonicSensor
+        color_sensor: ColorSensor, gyro_sensor: GyroSensor, ultrasonic_sensor: UltrasonicSensor, wheel_diameter: int
         ):
 
         self.brick = brick
@@ -90,6 +101,7 @@ class Robot:
             motor_rl=motor_rl,
             motor_fr=motor_fr,
             motor_fl=motor_fl,
+            wheel_diameter=wheel_diameter,
         )
         self.stab_wheel_angle = 0
 
@@ -176,6 +188,10 @@ class Robot:
     #   Berekent in hoeverre ingegrepen moet worden;
     #   Voert vervolgens de ingreep uit.
     # </summary>
+    # <returns>
+    #   False: wanneer de robot niet meer gestabiliseerd is en/of moet stoppen met stabiliseren.
+    #   True: n.v.t.
+    # </returns>
     def stabilise(self) -> bool:
         gyro_sensor_value = self.sensor_gyro.speed()
         robot_body_rate = gyro_sensor_value - self.gyro_offset
@@ -221,7 +237,7 @@ class Robot:
             wheel_rate = sum(self.stab_motor_position_change) / 4 / average_control_loop_period
 
             output_power = (-0.01 * self.stab_drive_speed) + (0.8 * self.body["rate"] + 15 * self.body["angle"] + 0.08 * wheel_rate + 0.12 * self.stab_wheel_angle)
-            #? De power is in duty (in procent dus): wanneer dit meer dan |100| (absoluut) is moet dit dus verlaagt worden naar 100
+            #? De power is in duty (in procent dus): wanneer dit buiten -100 < output_power < 100 is moet dit dus verlaagt of verhoogt worden naar 100
             if output_power > 100:
                 output_power = 100
             if output_power < -100:
@@ -262,9 +278,8 @@ def main():
 
     menneke.brick.light.on(Color.RED)
 
-    while True:
-        if not menneke.stabilise():
-            break
+    while menneke.stabilise():
+        pass
 
     menneke.brick.light.on(Color.GREEN)
     menneke.drive_base.drive(720)
