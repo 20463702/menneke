@@ -12,7 +12,7 @@ from math import pi as PI
 
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, GyroSensor
-from pybricks.nxtdevices import UltrasonicSensor, ColorSensor
+from pybricks.nxtdevices import UltrasonicSensor, ColorSensor, SoundSensor
 from pybricks.parameters import Port, Color
 from pybricks.tools import wait, StopWatch
 
@@ -90,8 +90,8 @@ class DriveBase:
 class Robot:
     #? Fields worden hier (bijna) niet beschreven (aan de hand van commentaar): dit wordt (waar nodig) gedaan waar ze hun functie dienen
     def __init__(self, brick: EV3Brick,
-        motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor,
-        color_sensor: ColorSensor, gyro_sensor: GyroSensor, ultrasonic_sensor: UltrasonicSensor, wheel_diameter: int
+        motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor, wheel_diameter: int,
+        color_sensor: ColorSensor, gyro_sensor: GyroSensor, ultrasonic_sensor: UltrasonicSensor, sound_sensor: SoundSensor
         ):
 
         self.brick = brick
@@ -108,6 +108,7 @@ class Robot:
         self.sensor_color = color_sensor
         self.sensor_ultrasonic = ultrasonic_sensor
         self.sensor_gyro = gyro_sensor
+        self.sensor_sound = sound_sensor
         self.gyro_offset = 0 # wordt in calibrate_gyrosensor() berekend
 
         self.timers = {
@@ -126,8 +127,8 @@ class Robot:
         }
 
         self.stab_motor_position_change = [0, 0, 0, 0]
-        self.stab_drive_speed = 0 # Alleen de drive speed gedurende de stabilisatie -> de 4 wielige aandrijving heeft dit niet nodig
-        self.stab_steering = 0 # Alleen de steering gedurende de stabilisatie -> de 4 wielige aandrijving heeft dit niet nodig
+        self.stab_drive_speed = 0 # Alleen de drive speed gedurende de stabilisatie: de 4 wielige aandrijving heeft dit niet nodig
+        self.stab_steering = 0 # Alleen de steering gedurende de stabilisatie: de 4 wielige aandrijving heeft dit niet nodig
 
     # <summary>
     #   Calibreerd de gyro sensor.
@@ -265,9 +266,11 @@ def main():
         motor_rr=Motor(Port.D),
         motor_fl=Motor(Port.B),
         motor_fr=Motor(Port.C),
+        wheel_diameter=40,
         gyro_sensor=GyroSensor(Port.S1),
         color_sensor=ColorSensor(Port.S3),
         ultrasonic_sensor=UltrasonicSensor(Port.S4)
+        sound_sensor=SoundSensor(Port.S2),
     )
     
     menneke.brick.light.off()
