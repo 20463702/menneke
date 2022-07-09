@@ -269,7 +269,7 @@ def main():
         wheel_diameter=40,
         gyro_sensor=GyroSensor(Port.S1),
         color_sensor=ColorSensor(Port.S3),
-        ultrasonic_sensor=UltrasonicSensor(Port.S4)
+        ultrasonic_sensor=UltrasonicSensor(Port.S4),
         sound_sensor=SoundSensor(Port.S2),
     )
     
