@@ -238,7 +238,7 @@ class Robot:
             wheel_rate = sum(self.stab_motor_position_change) / 4 / average_control_loop_period
 
             output_power = (-0.01 * self.stab_drive_speed) + (0.8 * self.body["rate"] + 15 * self.body["angle"] + 0.08 * wheel_rate + 0.12 * self.stab_wheel_angle)
-            #? De power is in duty (in procent dus): wanneer dit buiten -100 < output_power < 100 is moet dit dus verlaagt of verhoogt worden naar 100
+            #? De power is in duty (in procent dus): wanneer dit buiten -100 < output_power < 100 is moet dit dus verlaagt of verhoogt worden naar 100 of -100.
             if output_power > 100:
                 output_power = 100
             if output_power < -100:
