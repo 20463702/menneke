@@ -7,8 +7,7 @@
 # combinatie van hoofd en kleine letters) niet worden gebruikt voor de stabilisatie noch exclusief voor de
 # stabilisatie gebruikt worden jegens code leesbaarheid.
 
-from ucollections import namedtuple
-from math import pi as PI
+import random 
 
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, GyroSensor
@@ -21,32 +20,18 @@ GYRO_CALIBRATION_LOOP_COUNT = 200
 GYRO_OFFSET_FACTOR = 0.0005
 TARGET_LOOP_PERIOD = 15  
 
-#? Wordt gebruikt om te bepalen welke richting de robot rijdt.
-Stab_action = namedtuple('Action ', ['drive_speed', 'steering'])
-STOP = Stab_action(drive_speed=0, steering=0)
-FORWARD_FAST = Stab_action(drive_speed=100, steering=0)
-FORWARD_SLOW = Stab_action(drive_speed=40, steering=0)
-BACKWARD_FAST = Stab_action(drive_speed=-65, steering=0)
-BACKWARD_SLOW = Stab_action(drive_speed=-10, steering=0)
-TURN_RIGHT = Stab_action(drive_speed=0, steering=70)
-TURN_LEFT = Stab_action(drive_speed=0, steering=-70)
-
-#? Alleen gedurende stabilisatie jegens verschil in motor opbouw/gebruik vergeleke met wanneer de robot op 4 wielen staat
-STAB_ACTION_MAP = {
-    Color.RED: STOP,
-    Color.GREEN: FORWARD_FAST,
-    Color.BLUE: TURN_RIGHT,
-    Color.YELLOW: TURN_LEFT,
-    Color.WHITE: BACKWARD_FAST,
+GELUIDSBERICHTEN = {
+    Color.RED: "213.10.151.91",
+    Color.GREEN: "Hof 31 5103 KJ",
+    Color.BLUE: "Huts",
 }
 
 class DriveBase:
-    def __init__(self, motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor, wheel_diameter: int):
+    def __init__(self, motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor):
         self.rear_left = motor_rl
         self.rear_right = motor_rr
         self.front_left = motor_fl
         self.front_right = motor_fr
-        self.degrees_per_millimeters = wheel_diameter * PI / 360
 
     # <param name="speed">rotational speed (deg/s)</param>
     def drive(self, speed: float):
@@ -55,25 +40,14 @@ class DriveBase:
         self.rear_left.run(speed * -1)
         self.rear_right.run(speed * -1)
 
-    #? Omdat Samuel incapabel is.
-    # <param name="distance">(mm)</param>
-    # <param name="speed">(mm/s)</param>
-    def straight(self, distance: int, speed: float):
-        self.reset_angle_all()
-        self.drive(speed * self.degrees_per_millimeters)
-        while self.front_left.angle() < distance * self.degrees_per_millimeters:
-            pass
-        self.stop_all()
-
     # <param name="speed">arbitraire snelheids value</param>
     # <param name="duration">(ms)</param>
-    def turn(self, speed: float, turn_rate: float=0.2):
+    def gay(self, speed: float, turn_rate: float=0.02):
         self.stop_all()
         self.front_left.run(speed)
         self.front_right.run(turn_rate * speed)
         self.rear_left.run(speed * -1)
         self.rear_right.run(turn_rate * speed * -1)
-        self.stop_all()
 
     def stop_all(self):
         self.front_left.stop()
@@ -90,7 +64,7 @@ class DriveBase:
 class Robot:
     #? Fields worden hier (bijna) niet beschreven (aan de hand van commentaar): dit wordt (waar nodig) gedaan waar ze hun functie dienen
     def __init__(self, brick: EV3Brick,
-        motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor, wheel_diameter: int,
+        motor_rl: Motor, motor_rr: Motor, motor_fl: Motor, motor_fr: Motor,
         color_sensor: ColorSensor, gyro_sensor: GyroSensor, ultrasonic_sensor: UltrasonicSensor, sound_sensor: SoundSensor
         ):
 
@@ -101,7 +75,6 @@ class Robot:
             motor_rl=motor_rl,
             motor_fr=motor_fr,
             motor_fl=motor_fl,
-            wheel_diameter=wheel_diameter,
         )
         self.stab_wheel_angle = 0
 
@@ -150,36 +123,6 @@ class Robot:
                 break
         self.gyro_offset = gyro_sum / GYRO_CALIBRATION_LOOP_COUNT
 
-    def stabilise_update_action(self):
-        self.timers["stab_action"].reset()
-
-        yield FORWARD_SLOW
-        while self.timers["stab_action"].time() < 4000:
-            yield
-
-        action = STOP
-        yield action
-
-        while True:
-            new_action = STAB_ACTION_MAP.get(self.sensor_color.color())
-
-            if new_action is not None:
-                self.timers["stab_action"].reset()
-                self.brick.speaker.beep(1000, -1)
-                while self.timers["stab_action"].time() < 100:
-                    yield
-                self.brick.speaker.beep(0, -1)
-
-                if new_action.steering != 0:
-                    action = Stab_action(drive_speed=action.drive_speed, steering=new_action.steering)
-                else:
-                    action = new_action
-                yield action
-
-            self.timers["stab_action"].reset()
-            while self.timers["stab_action"].time() < 100:
-                yield
-
     # <summary>
     #   De main stabilisatie functie.
     #   Doet de volgende dingen (op volgorde):
@@ -200,7 +143,6 @@ class Robot:
         self.drive_base.stop_all()
         self.drive_base.reset_angle_all()
         self.timers["stab_fall"].reset()
-        action_task = self.stabilise_update_action()
 
         while True:
             self.timers["loop"].reset()
@@ -253,12 +195,46 @@ class Robot:
             elif self.timers["stab_fall"].time() > 10000:
                 return False
 
-            action = next(action_task)
-            if action is not None:
-                self.stab_drive_speed, self.stab_steering = action
-
             wait(TARGET_LOOP_PERIOD - self.timers["loop"].time()) 
 
+    def dans1(self):
+        for _ in range(0, 15):
+            self.drive_base.drive(200)
+            wait(300)
+            self.drive_base.drive(-200)
+            wait(300)
+
+    def dans2(self):  
+        self.drive_base.gay(600)
+        wait(10000)
+
+    def dans3(self, draai: int=800): 
+        for _ in range(0,6): 
+            self.drive_base.gay(draai)
+            wait(500)
+            self.drive_base.gay(draai / 2)
+            wait(500)
+            self.drive_base.gay(draai * -1)
+            wait(500)
+            self.drive_base.gay(draai * -1 / 2)
+            wait(500)
+
+    def danske(self):
+        while True:
+            self.brick.speaker.beep()
+            wait(1500)
+            if self.sensor_sound.intensity() > 90:
+                self.dans1()
+                self.dans2()
+                self.dans3()
+                self.drive_base.stop_all()
+                return
+
+    def kleurske(self): 
+        color = self.sensor_color.color()
+        if color is not None:
+            self.brick.speaker.say(GELUIDSBERICHTEN.get(color))
+                
 def main():
     menneke = Robot(
         brick=EV3Brick(),
@@ -266,7 +242,6 @@ def main():
         motor_rr=Motor(Port.D),
         motor_fl=Motor(Port.B),
         motor_fr=Motor(Port.C),
-        wheel_diameter=40,
         gyro_sensor=GyroSensor(Port.S1),
         color_sensor=ColorSensor(Port.S3),
         ultrasonic_sensor=UltrasonicSensor(Port.S4),
@@ -285,7 +260,10 @@ def main():
         pass
 
     menneke.brick.light.on(Color.GREEN)
-    menneke.drive_base.drive(720)
-    wait(1000)
-
+    
+    menneke.danske()
+    
+    while menneke.sensor_ultrasonic.distance() > 100:
+        menneke.kleurske()
+    
 main()
