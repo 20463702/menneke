@@ -20,6 +20,7 @@ GYRO_CALIBRATION_LOOP_COUNT = 200
 GYRO_OFFSET_FACTOR = 0.0005
 TARGET_LOOP_PERIOD = 15  
 
+# Mapt geluidsberichten aan bepaalde kleuren.
 GELUIDSBERICHTEN = {
     Color.RED: "213.10.151.91",
     Color.GREEN: "Hof 31 5103 KJ",
@@ -49,6 +50,11 @@ class DriveBase:
         self.rear_left.run(speed * -1)
         self.rear_right.run(turn_rate * speed * -1)
 
+    # <summary>
+    #   Zorgt ervoor dat alle motoren stoppen:
+    #   hierdoor kan er vooruit gereden worden en tegelijkertijd een andere functie toegepast worden,
+    #   zonder dat er eerst op de drive functie gewacht moet worden.
+    # </summary>
     def stop_all(self):
         self.front_left.stop()
         self.front_right.stop()
@@ -105,7 +111,6 @@ class Robot:
 
     # <summary>
     #   Calibreerd de gyro sensor.
-    #TODO beter commentaar
     # </summary>
     def calibrate_gyrosensor(self):
         while True:
@@ -197,6 +202,9 @@ class Robot:
 
             wait(TARGET_LOOP_PERIOD - self.timers["loop"].time()) 
 
+    # <summary>
+    #   Een van de dansjes.
+    # </summary>
     def dans1(self):
         for _ in range(0, 15):
             self.drive_base.drive(200)
@@ -204,10 +212,16 @@ class Robot:
             self.drive_base.drive(-200)
             wait(300)
 
+    # <summary>
+    #   Een van de dansjes.
+    # </summary>
     def dans2(self):  
         self.drive_base.gay(600)
         wait(10000)
 
+    # <summary>
+    #   Een van de dansjes.
+    # </summary>
     def dans3(self, draai: int=800): 
         for _ in range(0,6): 
             self.drive_base.gay(draai)
@@ -219,6 +233,9 @@ class Robot:
             self.drive_base.gay(draai * -1 / 2)
             wait(500)
 
+    # <summary>
+    #   Laat de robot beepjes maken totdat er geluid gedetecteerd wordt, dan laat het de robot de bovenstaande dansjes doen.
+    # </summary
     def danske(self):
         while True:
             self.brick.speaker.beep()
@@ -230,6 +247,9 @@ class Robot:
                 self.drive_base.stop_all()
                 return
 
+    # <summary>
+    #   Laat de robot een bericht zeggen gebaseerd op de kleur die gedetecteerd wordt.
+    # </summary>
     def kleurske(self): 
         color = self.sensor_color.color()
         if color is not None:
@@ -255,12 +275,10 @@ def main():
     menneke.calibrate_gyrosensor()
 
     menneke.brick.light.on(Color.RED)
-
     while menneke.stabilise():
         pass
 
     menneke.brick.light.on(Color.GREEN)
-    
     menneke.danske()
     
     while menneke.sensor_ultrasonic.distance() > 100:
