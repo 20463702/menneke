@@ -152,7 +152,6 @@ class Robot:
         while True:
             self.timers["loop"].reset()
 
-            #? Voor een of andere vage rede werkt dit niet in de main functie maar wel in deze loop???
             if self.sensor_ultrasonic.distance() < 100:
                 self.drive_base.rear_right.dc(100)
                 self.drive_base.rear_left.dc(100)
